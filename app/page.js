@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 
 const FAKE_DONATIONS = [
   { name: 'Rahul_Gaming', amount: 69, message: 'Streamer touch grass 😭', color: '#f97316' },
-  { name: 'PriyaLive', amount: 151, message: 'Bhai teri aim toh meri dadi se bhi buri hai 💀', color: '#8b5cf6' },
+  { name: 'PriyaLive', amount: 151, message: 'Bhai teri aim toh meri Priyanka se bhi buri hai 💀', color: '#8b5cf6' },
   { name: 'DelhiKaBanda', amount: 21, message: 'Chai pi le yaar, haath kaanp rahe hain 🍵', color: '#06b6d4' },
   { name: 'KoiRandom420', amount: 500, message: 'First time dekha streamer actually jeeta 🔥🔥🔥', color: '#22c55e' },
   { name: 'AnonymousFan', amount: 11, message: 'Love from Mumbai ❤️', color: '#ec4899' },
