@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import LoadingScreen from '@/components/LoadingScreen'
 import { supabase } from '@/lib/supabase'
 
 export default function DonatePage({ params }) {
@@ -94,11 +95,7 @@ export default function DonatePage({ params }) {
 
   const tier = getTier(amount)
 
-  if (!creator) return (
-    <div style={{ minHeight: '100vh', background: '#0a0a14', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontFamily: 'system-ui' }}>
-      Loading...
-    </div>
-  )
+  if (!creator) return <LoadingScreen text='Finding streamer...' />
 
   return (
     <div style={styles.page}>

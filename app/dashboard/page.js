@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import LoadingScreen from '@/components/LoadingScreen'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -107,22 +108,9 @@ export default function Dashboard() {
     setTimeout(() => setCopied(''), 2000)
   }
 
-  if (!mounted || loading) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#0a0a14', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontFamily: 'system-ui', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ fontSize: '32px' }}>🍵</div>
-        <div style={{ fontSize: '14px' }}>Loading dashboard...</div>
-      </div>
-    )
-  }
+  if (!mounted || loading) return <LoadingScreen text='Loading dashboard...' />
 
-  if (!creator) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#0a0a14', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontFamily: 'system-ui', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ fontSize: '14px' }}>Something went wrong. <button onClick={() => window.location.reload()} style={{ color: '#f97316', background: 'none', border: 'none', cursor: 'pointer' }}>Reload</button></div>
-      </div>
-    )
-  }
+  if (!creator) return <LoadingScreen text='Something went wrong...' />
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const overlayUrl = `${appUrl}/overlay/${creator.id}`
