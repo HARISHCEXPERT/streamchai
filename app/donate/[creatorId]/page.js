@@ -32,11 +32,26 @@ export default function DonatePage({ params }) {
     return { chars: 300, time: '30 sec', tts: true }
   }
 
+  function loadRazorpay() {
+    return new Promise(resolve => {
+      if (window.Razorpay) { resolve(true); return }
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
   async function handlePay() {
     if (!amount || parseInt(amount) < 1) return
     setLoading(true)
 
     try {
+      // 0. Load Razorpay SDK
+      const loaded = await loadRazorpay()
+      if (!loaded) { alert('Razorpay load nahi hua. Internet check karo.'); setLoading(false); return }
+
       // 1. Create order on backend
       const res = await fetch('/api/create-order', {
         method: 'POST',
@@ -99,10 +114,7 @@ export default function DonatePage({ params }) {
 
   return (
     <div style={styles.page}>
-      {/* Razorpay SDK */}
-      <script src="https://checkout.razorpay.com/v1/checkout.js" />
-
-      {success && (
+{success && (
         <div style={styles.successBanner}>
           🍵 Donation sent! Watch for your name on stream!
         </div>
