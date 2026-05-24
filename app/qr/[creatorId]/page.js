@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import QRCode from 'qrcode'
 
 export default function QRPage({ params }) {
   const { creatorId } = params
   const [creator, setCreator] = useState(null)
-  const [qrUrl, setQrUrl] = useState('')
+  const [qrDataUrl, setQrDataUrl] = useState('')
 
   useEffect(() => {
     supabase
@@ -14,11 +15,17 @@ export default function QRPage({ params }) {
       .select('name, alert_settings')
       .eq('id', creatorId)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         setCreator(data)
         const donateUrl = `${window.location.origin}/donate/${creatorId}`
-        const accent = (data?.alert_settings?.accentColor || '#f97316').replace('#', '')
-        setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(donateUrl)}&color=${accent}&bgcolor=0a0a14&margin=20`)
+        const accent = data?.alert_settings?.accentColor || '#f97316'
+        const dataUrl = await QRCode.toDataURL(donateUrl, {
+          width: 300,
+          margin: 2,
+          color: { dark: accent, light: '#0a0a14' },
+          errorCorrectionLevel: 'H',
+        })
+        setQrDataUrl(dataUrl)
       })
   }, [creatorId])
 
@@ -33,21 +40,16 @@ export default function QRPage({ params }) {
       justifyContent: 'center',
       fontFamily: 'system-ui, sans-serif',
     }}>
-      {qrUrl && (
+      {qrDataUrl && (
         <div style={{
           background: '#0a0a14',
           border: `3px solid ${accent}`,
           borderRadius: '20px',
           padding: '24px',
           textAlign: 'center',
-          boxShadow: `0 0 40px ${accent}44`,
           animation: 'pulse 3s ease infinite',
         }}>
-          <img
-            src={qrUrl}
-            alt="Donation QR"
-            style={{ width: '200px', height: '200px', borderRadius: '10px', display: 'block' }}
-          />
+          <img src={qrDataUrl} alt="Donation QR" style={{ width: '200px', height: '200px', borderRadius: '10px', display: 'block' }} />
           <div style={{ color: accent, fontWeight: '800', fontSize: '18px', marginTop: '14px' }}>
             🍵 Chai Pilao
           </div>
@@ -56,7 +58,6 @@ export default function QRPage({ params }) {
           </div>
         </div>
       )}
-
       <style>{`
         body { background: transparent !important; }
         * { box-sizing: border-box; margin: 0; padding: 0; }

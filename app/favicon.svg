@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Steam -->
+  <path d="M35 28 C33 20 39 14 35 6" stroke="#f97316" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.8"/>
+  <path d="M50 24 C48 14 56 8 50 0" stroke="#f97316" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.8"/>
+  <path d="M65 28 C67 20 61 14 65 6" stroke="#f97316" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.8"/>
+
+  <!-- Cup rim -->
+  <rect x="18" y="30" width="64" height="10" rx="4" fill="#f97316"/>
+
+  <!-- Cup body -->
+  <path d="M22 40 L28 78 L72 78 L78 40 Z" fill="#f97316"/>
+
+  <!-- Heartbeat line on cup -->
+  <polyline points="28,60 36,60 40,48 44,72 48,54 52,66 56,60 72,60"
+    stroke="#0a0a14" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Saucer -->
+  <rect x="14" y="78" width="72" height="10" rx="5" fill="#c2500a"/>
+</svg>
