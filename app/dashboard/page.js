@@ -132,7 +132,7 @@ export default function Dashboard() {
               <img src={user.user_metadata.avatar_url} alt="avatar" style={styles.avatar} />
             )}
             <span style={styles.userName}>{creator.name}</span>
-            <button onClick={signOut} style={styles.signOutBtn}>Sign out</button>
+            <button onClick={() => router.push('/customize')} style={styles.customizeBtn}>🎨 Customize</button><button onClick={signOut} style={styles.signOutBtn}>Sign out</button>
           </div>
         </div>
 
@@ -266,6 +266,7 @@ const styles = {
   avatar: { width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' },
   userName: { fontSize: '14px', color: '#94a3b8' },
   signOutBtn: { background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: '#64748b', padding: '6px 14px', borderRadius: '8px', fontSize: '12px', cursor: 'pointer' },
+  customizeBtn: { background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.3)', color: '#f97316', padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' },
   statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' },
   statCard: { background: '#1a1a2e', border: '1px solid rgba(249,115,22,0.15)', borderRadius: '12px', padding: '20px', textAlign: 'center' },
   statValue: { fontSize: '28px', fontWeight: '800', color: '#f97316' },
