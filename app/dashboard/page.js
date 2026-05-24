@@ -114,6 +114,7 @@ export default function Dashboard() {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
   const overlayUrl = `${appUrl}/overlay/${creator.id}`
+  const qrUrl = `${appUrl}/qr/${creator.id}`
   const donationUrl = `${appUrl}/donate/${creator.id}`
   const webhookUrl = `${appUrl}/api/webhook/razorpay`
 
@@ -166,6 +167,11 @@ export default function Dashboard() {
           <Card title="🖥️ OBS Overlay URL" subtitle="OBS → Sources → Browser Source → paste URL">
             <UrlBox url={overlayUrl} copied={copied === 'overlay'} onCopy={() => copyUrl(overlayUrl, 'overlay')} />
             <p style={styles.hint}>Width: 1920 | Height: 1080 | Custom CSS: <code>body {'{ background: transparent !important; }'}</code></p>
+          </Card>
+
+          <Card title="📱 QR Code Overlay" subtitle="OBS mein laga do — viewers scan karein">
+            <UrlBox url={qrUrl} copied={copied === 'qr'} onCopy={() => copyUrl(qrUrl, 'qr')} />
+            <p style={styles.hint}>OBS Browser Source mein add karo — transparent background pe QR dikhega</p>
           </Card>
 
           <Card title="🔗 Donation Link" subtitle="Share this with your viewers">
