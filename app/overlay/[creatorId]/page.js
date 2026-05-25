@@ -90,13 +90,10 @@ export default function OverlayPage({ params }) {
       .eq('id', donation.id)
 
     // TTS
-    if (donation.tts_enabled && donation.message && typeof window !== 'undefined') {
-      const u = new SpeechSynthesisUtterance(
-        `${donation.donor_name} ne ${donation.amount} rupaye diye. ${donation.message}`
-      )
-      u.lang = 'hi-IN'
-      u.rate = 0.85
-      window.speechSynthesis.speak(u)
+    if (donation.tts_enabled && donation.message) {
+      setTimeout(() => {
+        speakTTS(`${donation.donor_name} ne ${donation.amount} rupaye diye. ${donation.message}`)
+      }, 500)
     }
 
     // Play sound
@@ -115,21 +112,82 @@ export default function OverlayPage({ params }) {
 
   function playSound(sound) {
     if (!sound || sound === 'none' || typeof window === 'undefined') return
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)()
+      ctx.resume().then(() => {
+        const freqMap = { ding: [880, 1100], chime: [1046, 1318], tada: [659, 784, 988] }
+        const freqs = freqMap[sound] || [880]
+        freqs.forEach((freq, i) => {
+          const o = ctx.createOscillator()
+          const g = ctx.createGain()
+          o.connect(g)
+          g.connect(ctx.destination)
+          o.frequency.value = freq
+          o.type = 'sine'
+          const start = ctx.currentTime + i * 0.15
+          g.gain.setValueAtTime(0, start)
+          g.gain.linearRampToValueAtTime(0.4, start + 0.05)
+          g.gain.exponentialRampToValueAtTime(0.001, start + 0.5)
+          o.start(start)
+          o.stop(start + 0.5)
+        })
+      })
+    } catch(e) { console.log('Sound error:', e) }
+  }
+
+  function speakTTS(text) {
+    if (typeof window === 'undefined') return
+    try {
+      window.speechSynthesis.cancel()
+      const u = new SpeechSynthesisUtterance(text)
+      u.lang = 'hi-IN'
+      u.rate = 0.85
+      u.volume = 1
+      // Force load voices
+      const voices = window.speechSynthesis.getVoices()
+      if (voices.length > 0) {
+        const hindiVoice = voices.find(v => v.lang.includes('hi')) || voices[0]
+        u.voice = hindiVoice
+      }
+      window.speechSynthesis.speak(u)
+    } catch(e) { console.log('TTS error:', e) }
+  }
+
+  const [activated, setActivated] = useState(false)
+
+  function activate() {
+    setActivated(true)
+    // Unlock audio context
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
-    const o = ctx.createOscillator()
-    const g = ctx.createGain()
-    o.connect(g)
-    g.connect(ctx.destination)
-    const freqMap = { ding: 880, chime: 1046, tada: 659 }
-    o.frequency.value = freqMap[sound] || 880
-    o.type = 'sine'
-    g.gain.setValueAtTime(0.3, ctx.currentTime)
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6)
-    o.start(ctx.currentTime)
-    o.stop(ctx.currentTime + 0.6)
+    ctx.resume()
+    // Unlock TTS
+    const u = new SpeechSynthesisUtterance('')
+    window.speechSynthesis.speak(u)
   }
 
   if (!settings) return null
+
+  if (!activated) {
+    return (
+      <div style={{
+        width: '100vw', height: '100vh', background: 'transparent',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
+        padding: '24px',
+      }}>
+        <button
+          onClick={activate}
+          style={{
+            background: 'rgba(249,115,22,0.9)', color: '#fff', border: 'none',
+            borderRadius: '10px', padding: '10px 20px', fontSize: '14px',
+            fontWeight: '700', cursor: 'pointer',
+          }}
+        >
+          🔊 Click to Activate Alerts
+        </button>
+        <style>{'body { background: transparent !important; }'}</style>
+      </div>
+    )
+  }
 
   const theme = THEMES[settings.theme] || THEMES.dark
   const accentColor = settings.accentColor || '#f97316'
