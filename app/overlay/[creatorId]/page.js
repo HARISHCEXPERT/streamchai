@@ -43,6 +43,10 @@ export default function OverlayPage({ params }) {
     // Recover pending
     recoverPending()
 
+    // Poll every 3 seconds as backup
+    const poll = setInterval(recoverPending, 3000)
+    return () => { supabase.removeChannel(channel); clearInterval(poll) }
+
     // Realtime subscribe
     const channel = supabase
       .channel(`donations:${creatorId}`)
@@ -58,7 +62,7 @@ export default function OverlayPage({ params }) {
       })
       .subscribe()
 
-    return () => supabase.removeChannel(channel)
+
   }, [creatorId])
 
   useEffect(() => {
