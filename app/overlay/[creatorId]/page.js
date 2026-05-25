@@ -22,10 +22,11 @@ export default function OverlayPage({ params }) {
   const [queue, setQueue] = useState([])
   const [current, setCurrent] = useState(null)
   const [settings, setSettings] = useState(null)
+  const [activated, setActivated] = useState(false)
   const processingRef = useRef(false)
+  const processedIds = useRef(new Set())
 
   useEffect(() => {
-    // Load creator settings
     supabase
       .from('creators')
       .select('alert_settings')
@@ -40,14 +41,7 @@ export default function OverlayPage({ params }) {
         })
       })
 
-    // Recover pending
-    recoverPending()
-
-    // Poll every 3 seconds as backup
-    const poll = setInterval(recoverPending, 3000)
-    return () => { supabase.removeChannel(channel); clearInterval(poll) }
-
-    // Realtime subscribe
+    // Realtime subscription
     const channel = supabase
       .channel(`donations:${creatorId}`)
       .on('postgres_changes', {
@@ -56,31 +50,22 @@ export default function OverlayPage({ params }) {
         table: 'donations',
         filter: `creator_id=eq.${creatorId}`,
       }, (payload) => {
-        if (payload.new.status === 'pending') {
-          setQueue(prev => [...prev, payload.new])
+        const donation = payload.new
+        if (donation.status === 'pending' && !processedIds.current.has(donation.id)) {
+          processedIds.current.add(donation.id)
+          setQueue(prev => [...prev, donation])
         }
       })
       .subscribe()
 
-
+    return () => supabase.removeChannel(channel)
   }, [creatorId])
 
   useEffect(() => {
-    if (!processingRef.current && queue.length > 0 && settings) {
+    if (!processingRef.current && queue.length > 0 && settings && activated) {
       processNext()
     }
-  }, [queue, settings])
-
-  async function recoverPending() {
-    const { data } = await supabase
-      .from('donations')
-      .select('*')
-      .eq('creator_id', creatorId)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: true })
-      .limit(10)
-    if (data?.length > 0) setQueue(data)
-  }
+  }, [queue, settings, activated])
 
   async function processNext() {
     if (queue.length === 0) return
@@ -93,14 +78,10 @@ export default function OverlayPage({ params }) {
       .update({ status: 'displayed' })
       .eq('id', donation.id)
 
-    // TTS
     if (donation.tts_enabled && donation.message) {
-      setTimeout(() => {
-        speakTTS(`${donation.donor_name} ne ${donation.amount} rupaye diye. ${donation.message}`)
-      }, 500)
+      setTimeout(() => speakTTS(`${donation.donor_name} ne ${donation.amount} rupaye diye. ${donation.message}`), 500)
     }
 
-    // Play sound
     playSound(settings?.sound)
 
     setTimeout(async () => {
@@ -136,7 +117,7 @@ export default function OverlayPage({ params }) {
           o.stop(start + 0.5)
         })
       })
-    } catch(e) { console.log('Sound error:', e) }
+    } catch(e) {}
   }
 
   function speakTTS(text) {
@@ -147,87 +128,45 @@ export default function OverlayPage({ params }) {
       u.lang = 'hi-IN'
       u.rate = 0.85
       u.volume = 1
-      // Force load voices
-      const voices = window.speechSynthesis.getVoices()
-      if (voices.length > 0) {
-        const hindiVoice = voices.find(v => v.lang.includes('hi')) || voices[0]
-        u.voice = hindiVoice
-      }
       window.speechSynthesis.speak(u)
-    } catch(e) { console.log('TTS error:', e) }
+    } catch(e) {}
   }
-
-  const [activated, setActivated] = useState(false)
 
   function activate() {
     setActivated(true)
-    // Unlock audio context
-    const ctx = new (window.AudioContext || window.webkitAudioContext)()
-    ctx.resume()
-    // Unlock TTS
-    const u = new SpeechSynthesisUtterance('')
-    window.speechSynthesis.speak(u)
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)()
+      ctx.resume()
+      const u = new SpeechSynthesisUtterance('')
+      window.speechSynthesis.speak(u)
+    } catch(e) {}
   }
 
   if (!settings) return null
-
-  if (!activated) {
-    return (
-      <div style={{
-        width: '100vw', height: '100vh', background: 'transparent',
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start',
-        padding: '24px',
-      }}>
-        <button
-          onClick={activate}
-          style={{
-            background: 'rgba(249,115,22,0.9)', color: '#fff', border: 'none',
-            borderRadius: '10px', padding: '10px 20px', fontSize: '14px',
-            fontWeight: '700', cursor: 'pointer',
-          }}
-        >
-          🔊 Click to Activate Alerts
-        </button>
-        <style>{'body { background: transparent !important; }'}</style>
-      </div>
-    )
-  }
 
   const theme = THEMES[settings.theme] || THEMES.dark
   const accentColor = settings.accentColor || '#f97316'
   const animation = ANIM_MAP[settings.animation] || ANIM_MAP.slide
 
+  if (!activated) {
+    return (
+      <div style={{ width: '100vw', height: '100vh', background: 'transparent', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', padding: '24px' }}>
+        <button onClick={activate} style={{ background: 'rgba(249,115,22,0.9)', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 20px', fontSize: '14px', fontWeight: '700', cursor: 'pointer' }}>
+          🔊 Click to Activate Alerts
+        </button>
+        <style>{`body { background: transparent !important; }`}</style>
+      </div>
+    )
+  }
+
   return (
-    <div style={{
-      width: '100vw',
-      height: '100vh',
-      background: 'transparent',
-      display: 'flex',
-      alignItems: 'flex-end',
-      justifyContent: 'flex-start',
-      padding: '24px',
-      fontFamily: "'Segoe UI', sans-serif",
-      overflow: 'hidden',
-    }}>
+    <div style={{ width: '100vw', height: '100vh', background: 'transparent', display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', padding: '24px', fontFamily: "'Segoe UI', sans-serif", overflow: 'hidden' }}>
       {current && (
-        <div
-          key={current.id}
-          style={{
-            background: theme.bg,
-            border: `2px solid ${accentColor}`,
-            borderRadius: '16px',
-            padding: '16px 20px',
-            maxWidth: '420px',
-            animation,
-            boxShadow: `0 0 30px ${accentColor}44`,
-          }}
-        >
+        <div key={current.id} style={{ background: theme.bg, border: `2px solid ${accentColor}`, borderRadius: '16px', padding: '16px 20px', maxWidth: '420px', animation, boxShadow: `0 0 30px ${accentColor}44` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
             <span style={{ fontSize: '28px' }}>🍵</span>
             <div style={{ flex: 1 }}>
-              <div style={{ color: accentColor, fontWeight: '800', fontSize: '18px' }}>
-                ₹{current.amount}
-              </div>
+              <div style={{ color: accentColor, fontWeight: '800', fontSize: '18px' }}>₹{current.amount}</div>
               <div style={{ color: '#64748b', fontSize: '12px' }}>
                 {current.donor_name}
                 {current.is_test && <span style={{ marginLeft: '6px', background: '#374151', padding: '1px 6px', borderRadius: '4px', fontSize: '10px' }}>TEST</span>}
@@ -239,13 +178,11 @@ export default function OverlayPage({ params }) {
               </div>
             )}
           </div>
-
           {current.message && (
-            <div style={{ color: theme.text, fontSize: '14px', lineHeight: '1.5', borderTop: `1px solid ${accentColor}22`, paddingTop: '8px', marginTop: '4px' }}>
+            <div style={{ color: theme.text, fontSize: '14px', lineHeight: '1.5', borderTop: `1px solid ${accentColor}22`, paddingTop: '8px' }}>
               {current.message}
             </div>
           )}
-
           <div style={{ height: '3px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '12px', overflow: 'hidden' }}>
             <div style={{ height: '100%', background: accentColor, borderRadius: '2px', animation: `shrink ${current.display_time}s linear forwards` }} />
           </div>
@@ -253,28 +190,11 @@ export default function OverlayPage({ params }) {
       )}
 
       <style>{`
-        @keyframes slideUp {
-          from { transform: translateY(60px) scale(0.9); opacity: 0; }
-          to   { transform: translateY(0) scale(1); opacity: 1; }
-        }
-        @keyframes bounceIn {
-          0%   { transform: scale(0.3); opacity: 0; }
-          50%  { transform: scale(1.08); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes popIn {
-          0%   { transform: scale(0); opacity: 0; }
-          80%  { transform: scale(1.1); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes shrink {
-          from { width: 100%; }
-          to   { width: 0%; }
-        }
+        @keyframes slideUp { from { transform: translateY(60px) scale(0.9); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        @keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 80% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes shrink { from { width: 100%; } to { width: 0%; } }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: transparent !important; }
       `}</style>
