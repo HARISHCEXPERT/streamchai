@@ -130,3 +130,18 @@ Auto dismiss → next in queue
 - **Payments**: Razorpay
 - **Hosting**: Vercel
 - **OBS**: Browser Source URL
+
+## Overlay library (StreamDrop)
+
+- `/overlays` — gallery: 10 designs × 5 themes (50 overlays). Test alerts, pick accent/sound, copy the OBS link, save as default.
+- `/alerts/<creatorId>?design=neon-burst&theme=neon` — live alert overlay (OBS Browser Source, 1920×1080).
+  Optional: `accent=%23ff0055`, `sound=coin|chime|tada|whoosh|levelup|ding|none`, `hype=2000` (₹ amount that triggers Big Hype, `0` = off), `tts=0`, `clean=1`.
+- `/widgets/<creatorId>?type=goal&title=New%20Mic&target=5000` — goal bar
+- `/widgets/<creatorId>?type=leaderboard` — top supporters this month
+- `/widgets/<creatorId>?type=ticker` — latest supporters strip
+- `/widgets/<creatorId>?type=winner&name=Aarav&title=Giveaway` — giveaway winner reveal
+
+Engine: `lib/overlay-engine.js` (framework-free), styles: `public/overlays/sd-overlays.css`,
+realtime: `lib/realtime.js` (auto-reconnect + catch-up of pending donations after reconnect; no periodic polling).
+Saved settings live in `creators.alert_settings` (`design`, `theme_v2`, `accentColor`, `sound`, optional `goal: { title, target, since }`).
+The old `/overlay/<creatorId>` page is unchanged.

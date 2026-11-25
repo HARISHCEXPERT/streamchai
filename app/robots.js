@@ -3,7 +3,7 @@ export default function robots() {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/dashboard', '/overlay/', '/qr/', '/api/'],
+      disallow: ['/dashboard', '/overlay/', '/alerts/', '/widgets/', '/qr/', '/api/'],
     },
     sitemap: 'https://streamchai.com/sitemap.xml',
   }

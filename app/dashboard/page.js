@@ -133,7 +133,7 @@ export default function Dashboard() {
               <img src={user.user_metadata.avatar_url} alt="avatar" style={styles.avatar} />
             )}
             <span style={styles.userName}>{creator.name}</span>
-            <button onClick={() => router.push('/customize')} style={styles.customizeBtn}>🎨 Customize</button><button onClick={signOut} style={styles.signOutBtn}>Sign out</button>
+            <button onClick={() => router.push('/customize')} style={styles.customizeBtn}>🎨 Customize</button><button onClick={() => router.push('/overlays')} style={styles.customizeBtn}>✨ Overlays</button><button onClick={signOut} style={styles.signOutBtn}>Sign out</button>
           </div>
         </div>
 
